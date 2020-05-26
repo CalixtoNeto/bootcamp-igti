@@ -22,7 +22,8 @@ comentários, tipos primitivos, variáveis, API’s nativas
 de servidor e web, funções, estruturas de decisão,
 estruturas de repetição, manipulação de eventos.</p>
 <h3><b>Atividades realizadas no módulo:</b></h3>
-<ul> 
+<ul>
+<li><a href="https://github.com/CalixtoNeto/bootcamp-igti/tree/master/modulo-1/user-list">User-List</a></li> 
 </ul>
 </li>
 <li>
