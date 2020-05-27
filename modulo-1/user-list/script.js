@@ -1,55 +1,115 @@
-// Atividade
-// Na carga inicial da aplicação, obter os dados de: https://randomuser.me/api/?seed=javascript&results=100&nat=BR&noinfo (Links para um site externo.)
-// Carregar os dados dos usuários em um array.
-// Permitir a filtragem de usuários através de um input com interação do usuário.
-// O usuário poderá filtrar dados quando digitar pelo menos um caractere no input.
-// O usuário poderá filtrar os dados tanto digitando "Enter" quanto clicando no botão correspondente, conforme imagens mais abaixo.
-// Montar dois painéis.
-// No painel da esquerda, listar os usuários filtrados.
-// No painel da direita, calcular e mostrar algumas estatísticas sobre esses usuários, conforme imagens abaixo.
+const listUsers = document.querySelector('#user-list');
+const listStatistics = document.querySelector('#statistics');
 
-// Dicas
-// Após executar a requisição à API, filtre somente os dados necessários ao app. Esses são: name (first + last), picture, dob.age e gender.
-// Monitore o input com o evento "keyup".
-// Filtrem os dados a partir de qualquer posição no nome, ou seja, o nome "Brenda" (caso exista na API) deve ser retornado se o filtro for "a".
-// Para filtrar, considere todo o texto em minúsculas. Assim, o filtro "E" trará tanto "Elena" quanto "Helena", caso existam na API.
-// Dê um console.log() nos dados do evento de digitação e você descobrirá como "cercar" a tecla "Enter".
-// Foque mais no código JavaScript e menos na interface. O mais importante é que o filtro e os cálculos estejam corretos.
-// Quebre o seu código em funções bem definidas.
-// Será necessária uma boa dose de manipulação manual do DOM. Isso pode ser feito tanto com innerHTML + string (recomendo a utilização de template literals) ou com os comandos document.createElement, appendChild etc.
-// Se quiserem fazer uma interface semelhante à das imagens, utilizem o Materialize (https://materializecss.com (Links para um site externo.)).
-// Não deixem de assistir o vídeo desse desafio, onde demonstro a aplicação em funcionamento e dou mais algumas dicas.
-// 'http://localhost:3000/results'
-window.addEventListener('load', () => {
-  inputUser = document.querySelector('#inputUser');
-  // getUsersApi();
-});
+let users;
+let filteredUsers;
+let statistics;
+let searchInput;
 
 const getUsersApi = async () => {
   try {
-    const response = await (
-      await fetch(
-        'https://randomuser.me/api/?seed=javascript&results=100&nat=BR&noinfo'
-      )
-    ).json();
-    const users = response.results.map((user) => {
-      return {
-        name: user.name.first + ' ' + user.name.last,
-        picture: user.picture.large,
-        dob: user.dob.age,
-        gender: user.gender,
-      };
-    });
-  } catch (err) {
-    console.log(`Request error: ${err}`);
+    const response = await fetch(
+      'https://randomuser.me/api/?seed=javascript&results=100&nat=BR&noinfo'
+    );
+    const json = await response.json();
+    users = json.results.map((user) => ({
+      name: user.name.first + ' ' + user.name.last,
+      gender: user.gender,
+      age: user.dob.age,
+      thumbnail: user.picture.thumbnail,
+    }));
+    filterUsers();
+  } catch (error) {
+    alert(`Error ${error}`);
   }
 };
 
-const renderUsers = () => {};
-const searchUser = () => {
-  inputUser.addEventListener('keyup', handleVerifyValue);
-  inputUser;
+const filterUsers = (value) => {
+  if (!users) return;
+  filteredUsers = !value
+    ? []
+    : users
+        .filter((user) => user.name.toLowerCase().includes(value.toLowerCase()))
+        .sort((a, b) => a.name.localeCompare(b.name));
+  showUsers();
+  showStatistics();
 };
-const handleVerifyValue = (event) => {
-  renderUsers();
+
+const showUsers = () => {
+  if (!filteredUsers.length) {
+    listUsers.innerHTML =
+      "<h2 class='lead text-center'>Nenhum usuário filtrado</h2>";
+    return;
+  }
+  listUsers.innerHTML =
+    `
+    <h2 class='lead text-center''>${filteredUsers.length} usuário${
+      filteredUsers.length > 1 ? 's' : ''
+    } encontrado${filteredUsers.length > 1 ? 's' : ''}
+    </h2>
+    <ul class="list-group">` +
+    filteredUsers
+      .map(
+        (user) => `
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <img src='${user.thumbnail}' alt='thumbnail' />
+            <span >
+                ${user.name}, ${user.age} anos
+            </span>
+        </li>`
+      )
+      .join('') +
+    '</ul>';
 };
+
+const showStatistics = () => {
+  if (!filteredUsers.length) {
+    listStatistics.innerHTML =
+      "<h2 class='lead text-center'>Nada a ser exibido</h2>";
+    return;
+  }
+  const ageSum = filteredUsers.reduce((memo, user) => memo + user.age, 0);
+  const statistics = {
+    male: filteredUsers.filter((user) => user.gender == 'male').length,
+    female: filteredUsers.filter((user) => user.gender == 'female').length,
+    ageSum,
+    ageAvg: ageSum / filteredUsers.length,
+  };
+  listStatistics.innerHTML = `
+        <h2 class='lead text-center'>
+            Estatísticas
+        </h2>
+        <ul "list-group">
+            <li class="list-group-item">Sexo Masculino : ${statistics.male.toFixed(
+              0
+            )}</li>
+            <li class="list-group-item">Sexo Feminino : ${statistics.female.toFixed(
+              0
+            )}</li>
+            <li class="list-group-item">Soma das idades : ${statistics.ageSum.toFixed(
+              0
+            )}</li>
+            <li class="list-group-item">Média das idades : ${statistics.ageAvg.toFixed(
+              2
+            )}</li>
+        </ul>
+    `;
+};
+
+const events = () => {
+  const input = document.querySelector('#input-search');
+
+  document.querySelector('#btn-search').addEventListener('click', () => {
+    filterUsers(input.value);
+  });
+  input.addEventListener('keyup', (event) => {
+    filterUsers(input.value);
+  });
+};
+
+const init = () => {
+  getUsersApi();
+  events();
+};
+
+window.addEventListener('load', init);
